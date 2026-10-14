@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repetytorium Pro – System Powtórek</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Czcionki Google (Roboto + Google Sans style) oraz ikony Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <style>
+    :root {
+      --md-primary: #0b57d0;
+      --md-primary-container: #d3e3fd;
+      --md-on-primary-container: #041e49;
+      --md-surface: #f8fafd;
+      --md-card: #ffffff;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--md-surface);
+      color: #1f1f1f;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Plus Jakarta Sans', 'Roboto', sans-serif;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    /* Material Design 3 Elevation */
+    .md-elevation-1 {
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.12), 0 1px 3px 1px rgba(60,64,67,0.08);
+    }
+    .md-elevation-2 {
+      box-shadow: 0 1px 3px 0 rgba(60,64,67,0.16), 0 4px 8px 3px rgba(60,64,67,0.10);
+    }
+    .md-elevation-3 {
+      box-shadow: 0 4px 8px 3px rgba(60,64,67,0.15), 0 1px 3px 0 rgba(60,64,67,0.25);
+    }
+    /* Material Ripple / Transition */
+    .md-btn {
+      transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .md-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- TOP APP BAR (Material Design 3) -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-[#d3e3fd] text-[#041e49] flex items-center justify-center shadow-sm">
+          <span class="material-symbols-outlined text-[24px]">school</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">Repetytorium Pro</h1>
+            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#e8f0fe] text-[#0b57d0]">
+              Material 3 • Cloud Sync
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">System powtórek priorytetyzowany liczbą błędnych pytań i Kalendarzem Google</p>
+        </div>
+      </div>
+
+      <!-- Status synchronizacji + Główne akcje -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <button onclick="openModal('cloudModal')"
+          class="md-btn flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 cursor-pointer"
+          title="Kliknij, aby sprawdzić status Arkusza Google i Kalendarza">
+          <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span id="syncStatusText">Łączenie z Arkuszem...</span>
+        </button>
+
+        <button onclick="pullFromGoogleSheets()"
+          class="md-btn p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 cursor-pointer"
+          title="Odśwież dane z Arkusza Google">
+          <span class="material-symbols-outlined text-[20px]">sync</span>
+        </button>
+
+        <button onclick="openAddModal()"
+          class="md-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white md-elevation-1 cursor-pointer">
+          <span class="material-symbols-outlined text-[20px]">add</span>
+          <span>Dodaj zagadnienie</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <!-- KARTY KPI (Material Surface Cards) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpiContainer"></section>
+
+    <!-- PASEK NAWIGACJI I FILTRÓW (Material Segmented / Chips) -->
+    <section class="bg-white rounded-3xl border border-slate-200/90 md-elevation-1 p-4 sm:p-5 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <!-- Zakładki widoku -->
+        <div class="inline-flex p-1 rounded-full bg-slate-100 border border-slate-200/80">
+          <button onclick="setTab('list')" id="tab-list"
+            class="md-btn flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold cursor-pointer bg-[#d3e3fd] text-[#041e49]">
+            <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+            <span>Lista priorytetowa</span>
+          </button>
+          <button onclick="setTab('schedule')" id="tab-schedule"
+            class="md-btn flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-medium cursor-pointer text-slate-600 hover:text-slate-900">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+            <span>Harmonogram</span>
+          </button>
+          <button onclick="setTab('stats')" id="tab-stats"
+            class="md-btn flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-medium cursor-pointer text-slate-600 hover:text-slate-900">
+            <span class="material-symbols-outlined text-[18px]">monitoring</span>
+            <span>Przedmioty</span>
+          </button>
+        </div>
+
+        <!-- Chip filtry przedmiotów -->
+        <div id="subjectFilters" class="flex items-center gap-1.5 flex-wrap"></div>
+      </div>
+
+      <!-- Wyszukiwarka i Sortowanie -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div class="relative flex-1">
+          <span class="material-symbols-outlined text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 text-[20px]">search</span>
+          <input id="searchInput" type="text" oninput="handleSearch(this.value)"
+            placeholder="Szukaj tematu, działu lub reakcji w notatkach..."
+            class="w-full bg-[#f1f5f9] hover:bg-slate-200/60 focus:bg-white border border-transparent focus:border-[#0b57d0] rounded-full pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-500 focus:outline-none transition-all" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-slate-500 text-[20px]">sort</span>
+          <span class="text-xs font-medium text-slate-600 shrink-0">Sortuj po:</span>
+          <select id="sortSelect" onchange="handleSort(this.value)"
+            class="bg-[#f1f5f9] hover:bg-slate-200/70 border border-slate-200 rounded-full px-4 py-2.5 text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-[#0b57d0] cursor-pointer">
+            <option value="wrongDesc">Ilości błędnych pytań (od największej)</option>
+            <option value="rateDesc">Odsetku błędów % (od najwyższego)</option>
+            <option value="urgencyDesc">Indeksie pilności (błędy + termin)</option>
+            <option value="dueAsc">Terminie następnej powtórki (chronologicznie)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- GŁÓWNY KONTENER WIDOKU -->
+    <section id="mainViewContainer"></section>
+  </main>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 1: DODAJ ZAGADNIENIE (Material Dialog)                           -->
+  <!-- ====================================================================== -->
+  <div id="addModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-[28px] max-w-lg w-full p-6 sm:p-7 space-y-5 md-elevation-3 border border-slate-100">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-full bg-[#d3e3fd] text-[#0b57d0] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">post_add</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Nowe zagadnienie do powtórki</h2>
+        </div>
+        <button onclick="closeModal('addModal')" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form onsubmit="submitAddTopic(event)" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Przedmiot</label>
+            <input id="addSubject" type="text" required value="Chemia" placeholder="np. Chemia, Biologia"
+              class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Dział / Kategoria</label>
+            <input id="addCategory" type="text" placeholder="np. Chemia organiczna"
+              class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Co jest do powtórzenia (temat / typ zadań)</label>
+          <input id="addTitle" type="text" required placeholder="np. Reakcje estryfikacji i próba Tollensa"
+            class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Ilość pytań</label>
+            <input id="addTotal" type="number" min="1" required value="30"
+              class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-rose-700 mb-1">Błędne pytania</label>
+            <input id="addWrong" type="number" min="0" required value="6"
+              class="w-full bg-rose-50/60 border border-rose-300 focus:border-rose-600 rounded-xl px-3.5 py-2.5 text-sm font-bold text-rose-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Następny termin</label>
+            <input id="addNextDate" type="date" required
+              class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-900 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Notatki (reakcje, warunki, wyjątki)</label>
+          <textarea id="addNotes" rows="2" placeholder="Na co zwrócić uwagę przy kolejnej powtórce..."
+            class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl p-3 text-xs sm:text-sm text-slate-900 focus:outline-none"></textarea>
+        </div>
+
+        <!-- Opcja synchronizacji z Kalendarzem Google -->
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#f0f4f9] border border-slate-200/80 cursor-pointer">
+          <input id="addSyncCalendar" type="checkbox" checked class="w-4 h-4 accent-[#0b57d0] rounded" />
+          <div class="text-xs">
+            <span class="font-semibold text-slate-800">Dodaj przypomnienie w Kalendarzu Google</span>
+            <p class="text-slate-500 text-[11px]">Tworzy wydarzenie całodniowe w dniu wyznaczonej powtórki</p>
+          </div>
+        </label>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('addModal')"
+            class="md-btn px-5 py-2.5 rounded-full text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">
+            Anuluj
+          </button>
+          <button type="submit"
+            class="md-btn px-6 py-2.5 rounded-full text-xs font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white md-elevation-1 cursor-pointer">
+            Zapisz i dodaj do planu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 2: WYKONAJ POWTÓRKĘ (Spaced Repetition + Kalendarz)              -->
+  <!-- ====================================================================== -->
+  <div id="reviewModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-[28px] max-w-lg w-full p-6 sm:p-7 space-y-4 md-elevation-3 border border-slate-100">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span class="material-symbols-outlined text-[15px]">task_alt</span>
+            Sesja powtórkowa
+          </span>
+          <h2 id="revTitle" class="text-base sm:text-lg font-bold text-slate-900 mt-1.5"></h2>
+        </div>
+        <button onclick="closeModal('reviewModal')" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form onsubmit="submitReview(event)" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-rose-700 mb-1">Nowa liczba błędnych pytań</label>
+            <input id="revWrong" type="number" min="0" required oninput="recalcSuggestedInterval()"
+              class="w-full bg-rose-50/60 border border-rose-300 focus:border-rose-600 rounded-xl px-3.5 py-2.5 text-base font-bold text-rose-700 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Łączna liczba pytań w puli</label>
+            <input id="revTotal" type="number" min="1" required oninput="recalcSuggestedInterval()"
+              class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3.5 py-2.5 text-base font-semibold text-slate-900 focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="bg-[#e8f0fe]/70 border border-[#d3e3fd] rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span id="revSuggestedLabel" class="text-xs font-semibold text-[#0b57d0]">Sugerowany kolejny termin:</span>
+            <input id="revNextDate" type="date" required
+              class="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800" />
+          </div>
+          <div class="flex items-center gap-1.5 pt-1 flex-wrap">
+            <button type="button" onclick="setReviewDays(1)" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-300 hover:bg-[#d3e3fd] hover:border-[#0b57d0] text-slate-700 cursor-pointer">+1 dzień</button>
+            <button type="button" onclick="setReviewDays(2)" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-300 hover:bg-[#d3e3fd] hover:border-[#0b57d0] text-slate-700 cursor-pointer">+2 dni</button>
+            <button type="button" onclick="setReviewDays(4)" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-300 hover:bg-[#d3e3fd] hover:border-[#0b57d0] text-slate-700 cursor-pointer">+4 dni</button>
+            <button type="button" onclick="setReviewDays(7)" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-300 hover:bg-[#d3e3fd] hover:border-[#0b57d0] text-slate-700 cursor-pointer">+7 dni</button>
+            <button type="button" onclick="setReviewDays(14)" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-300 hover:bg-[#d3e3fd] hover:border-[#0b57d0] text-slate-700 cursor-pointer">+14 dni</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Notatki po sesji</label>
+          <textarea id="revNotes" rows="2"
+            class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl p-3 text-xs sm:text-sm text-slate-900 focus:outline-none"></textarea>
+        </div>
+
+        <div id="revHistoryBox" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600"></div>
+
+        <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#f0f4f9] border border-slate-200/80 cursor-pointer">
+          <input id="revSyncCalendar" type="checkbox" checked class="w-4 h-4 accent-[#0b57d0] rounded" />
+          <div class="text-xs">
+            <span class="font-semibold text-slate-800">Zaktualizuj termin przypomnienia w Kalendarzu Google</span>
+          </div>
+        </label>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('reviewModal')"
+            class="md-btn px-5 py-2.5 rounded-full text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">
+            Anuluj
+          </button>
+          <button type="submit"
+            class="md-btn px-6 py-2.5 rounded-full text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white md-elevation-1 cursor-pointer">
+            Zapisz wynik i nowy termin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL 3: STATUS POŁĄCZENIA Z ARKUSZEM I KALENDARZEM                    -->
+  <!-- ====================================================================== -->
+  <div id="cloudModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-[28px] max-w-xl w-full p-6 sm:p-7 space-y-4 md-elevation-3 border border-slate-100">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-full bg-[#d3e3fd] text-[#0b57d0] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">cloud_done</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Synchronizacja Google Sheets & Kalendarz</h2>
+        </div>
+        <button onclick="closeModal('cloudModal')" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Adres Twojego skryptu Google Apps Script jest wbudowany na stałe. Wszystkie zmiany automatycznie zapisują się w Arkuszu Google oraz (jeśli zaznaczono) w Kalendarzu Google.
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Aktywny adres Web App (/exec):</label>
+        <input id="scriptUrlInput" type="url"
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 font-mono" />
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="pullFromGoogleSheets()"
+            class="md-btn px-4 py-2 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
+            Pobierz z Arkusza
+          </button>
+          <button type="button" onclick="pushToGoogleSheets(true)"
+            class="md-btn px-4 py-2 rounded-full text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-pointer">
+            Wymuś zapis + Kalendarz
+          </button>
+        </div>
+
+        <button type="button" onclick="saveScriptUrl()"
+          class="md-btn px-5 py-2 rounded-full text-xs font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white cursor-pointer">
+          Zapisz ustawienia
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================================================================
+    // WBUDOWANY NA SZTYWNO ADRES SKRYPTU GOOGLE APPS SCRIPT UŻYTKOWNIKA
+    // ========================================================================
+    const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1EsjM8flWWag88ydGBuLug699a8vvXPaZ69HEsBdCNXK__7kH5qnlw5uArOasLW5zNw/exec";
+
+    const STORAGE_TOPICS_KEY = "repetytorium_m3_topics_v2";
+    const STORAGE_URL_KEY = "repetytorium_m3_script_url_v2";
+
+    const getRelDate = (offsetDays) => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + offsetDays);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const SEED_TOPICS = [
+      {
+        id: "topic-1",
+        subject: "Chemia",
+        category: "Chemia organiczna",
+        title: "Reakcje estryfikacji, hydrolizy estrów oraz próba Tollensa i Trommera",
+        totalQuestions: 45,
+        wrongAnswers: 16,
+        nextReviewDate: getRelDate(0),
+        lastReviewDate: getRelDate(-2),
+        repetitions: 3,
+        notes: "Zwrócić uwagę na warunki reakcji, katalizator H2SO4 oraz stechiometrię utleniania aldehydów do kwasów karboksylowych.",
+        history: [{ date: getRelDate(-7), wrong: 24, total: 45 }, { date: getRelDate(-2), wrong: 16, total: 45 }]
+      },
+      {
+        id: "topic-2",
+        subject: "Biologia",
+        category: "Metabolizm",
+        title: "Oddychanie komórkowe: glikoliza, reakcja pomostowa i cykl Krebsa",
+        totalQuestions: 40,
+        wrongAnswers: 13,
+        nextReviewDate: getRelDate(-1),
+        lastReviewDate: getRelDate(-4),
+        repetitions: 2,
+        notes: "Powtórzyć bilans ATP, fosforylację substratową vs oksydacyjną oraz lokalizację poszczególnych etapów.",
+        history: [{ date: getRelDate(-8), wrong: 19, total: 40 }, { date: getRelDate(-4), wrong: 13, total: 40 }]
+      },
+      {
+        id: "topic-3",
+        subject: "Chemia",
+        category: "Chemia nieorganiczna",
+        title: "Reakcje redoks: MnO4- oraz Cr2O7(2-) w środowisku kwaśnym, obojętnym i zasadowym",
+        totalQuestions: 35,
+        wrongAnswers: 11,
+        nextReviewDate: getRelDate(0),
+        lastReviewDate: getRelDate(-3),
+        repetitions: 3,
+        notes: "Bilans elektronowo-jonowy, zmiana barw roztworów (fiolet -> bezbarwny / zielony / brunatny osad MnO2).",
+        history: [{ date: getRelDate(-6), wrong: 15, total: 35 }, { date: getRelDate(-3), wrong: 11, total: 35 }]
+      },
+      {
+        id: "topic-4",
+        subject: "Chemia",
+        category: "Chemia fizyczna",
+        title: "Równowaga chemiczna, reguła przekory i pH roztworów buforowych",
+        totalQuestions: 35,
+        wrongAnswers: 7,
+        nextReviewDate: getRelDate(1),
+        lastReviewDate: getRelDate(-3),
+        repetitions: 4,
+        notes: "Wpływ ciśnienia i temperatury na stałą równowagi Kc oraz obliczenia ze stałej dysocjacji Ka/Kb.",
+        history: [{ date: getRelDate(-6), wrong: 12, total: 35 }, { date: getRelDate(-3), wrong: 7, total: 35 }]
+      },
+      {
+        id: "topic-5",
+        subject: "Biologia",
+        category: "Genetyka",
+        title: "Ekspresja informacji genetycznej, operony i mutacje punktowe",
+        totalQuestions: 50,
+        wrongAnswers: 4,
+        nextReviewDate: getRelDate(3),
+        lastReviewDate: getRelDate(-3),
+        repetitions: 5,
+        notes: "Operon laktozowy i tryptofanowy - różnica między indukcją a represją procesów transkrypcji.",
+        history: [{ date: getRelDate(-10), wrong: 11, total: 50 }, { date: getRelDate(-3), wrong: 4, total: 50 }]
+      },
+      {
+        id: "topic-6",
+        subject: "Chemia",
+        category: "Węglowodory",
+        title: "Reakcje substytucji rodnikowej, elektrofilowej oraz addycji do alkenów i alkinów",
+        totalQuestions: 40,
+        wrongAnswers: 9,
+        nextReviewDate: getRelDate(1),
+        lastReviewDate: getRelDate(-2),
+        repetitions: 2,
+        notes: "Reakcja Kuczerowa, bromowanie benzenu wobec FeBr3 vs na świetle (toluen), reguła Markownikowa.",
+        history: [{ date: getRelDate(-2), wrong: 9, total: 40 }]
+      }
+    ];
+
+    let topics = [];
+    let scriptUrl = localStorage.getItem(STORAGE_URL_KEY) || DEFAULT_SCRIPT_URL;
+    if (!scriptUrl || !scriptUrl.includes("/exec")) {
+      scriptUrl = DEFAULT_SCRIPT_URL;
+    }
+
+    let activeTab = "list";
+    let selectedSubject = "Wszystkie";
+    let searchQuery = "";
+    let sortBy = "wrongDesc";
+    let activeReviewTopicId = null;
+    let syncTimeout = null;
+
+    function init() {
+      try {
+        const saved = localStorage.getItem(STORAGE_TOPICS_KEY);
+        topics = saved ? JSON.parse(saved) : SEED_TOPICS;
+      } catch (e) {
+        topics = SEED_TOPICS;
+      }
+
+      document.getElementById("scriptUrlInput").value = scriptUrl;
+      renderAll();
+      pullFromGoogleSheets();
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(STORAGE_TOPICS_KEY, JSON.stringify(topics));
+      } catch (e) {}
+    }
+
+    function updateSyncBadge(state, text) {
+      const dot = document.getElementById("syncDot");
+      const label = document.getElementById("syncStatusText");
+      label.textContent = text;
+      dot.className = "w-2.5 h-2.5 rounded-full " + (
+        state === "ok" ? "bg-emerald-500" :
+        state === "syncing" ? "bg-amber-500 animate-ping" :
+        state === "error" ? "bg-rose-500" : "bg-slate-400"
+      );
+    }
+
+    async function pullFromGoogleSheets() {
+      if (!scriptUrl) return;
+      updateSyncBadge("syncing", "Synchronizacja z Arkuszem...");
+      try {
+        const res = await fetch(scriptUrl, { method: "GET", redirect: "follow" });
+        const data = await res.json();
+        if (data.status === "ok" && Array.isArray(data.topics)) {
+          if (data.topics.length > 0) {
+            topics = data.topics;
+            saveLocal();
+            renderAll();
+          } else {
+            await pushToGoogleSheets(false);
+          }
+          updateSyncBadge("ok", "Połączono z Google Sheets");
+        } else {
+          updateSyncBadge("error", "Błąd odpowiedzi skryptu");
+        }
+      } catch (err) {
+        console.error(err);
+        updateSyncBadge("error", "Tryb lokalny (błąd sieci)");
+      }
+    }
+
+    async function pushToGoogleSheets(syncCalendarFlag = false, calendarTopic = null) {
+      saveLocal();
+      if (!scriptUrl) return;
+      updateSyncBadge("syncing", "Zapisywanie zmian...");
+      try {
+        const payload = {
+          action: "syncAll",
+          topics: topics,
+          syncCalendar: Boolean(syncCalendarFlag),
+          calendarTopic: calendarTopic
+        };
+        const res = await fetch(scriptUrl, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === "ok") {
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          updateSyncBadge("ok", calendarTopic ? `Zapisano + Kalendarz (${timeStr})` : `Zapisano w chmurze (${timeStr})`);
+        } else {
+          updateSyncBadge("error", "Błąd zapisu w Arkuszu");
+        }
+      } catch (err) {
+        console.error(err);
+        updateSyncBadge("error", "Błąd zapisu sieciowego");
+      }
+    }
+
+    function schedulePush(syncCalendarFlag = false, calendarTopic = null) {
+      saveLocal();
+      if (!scriptUrl) return;
+      clearTimeout(syncTimeout);
+      updateSyncBadge("syncing", "Zapisywanie...");
+      syncTimeout = setTimeout(() => {
+        pushToGoogleSheets(syncCalendarFlag, calendarTopic);
+      }, 450);
+    }
+
+    function saveScriptUrl() {
+      scriptUrl = document.getElementById("scriptUrlInput").value.trim() || DEFAULT_SCRIPT_URL;
+      localStorage.setItem(STORAGE_URL_KEY, scriptUrl);
+      closeModal("cloudModal");
+      pullFromGoogleSheets();
+    }
+
+    // Szybki link do Kalendarza Google (otwierany w nowej karcie na życzenie)
+    function getGoogleCalendarUrl(topic) {
+      const dateRaw = (topic.nextReviewDate || getRelDate(0)).replace(/-/g, "");
+      const nextDayObj = new Date((topic.nextReviewDate || getRelDate(0)) + "T00:00:00");
+      nextDayObj.setDate(nextDayObj.getDate() + 1);
+      const yyyy = nextDayObj.getFullYear();
+      const mm = String(nextDayObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(nextDayObj.getDate()).padStart(2, '0');
+      const nextDateRaw = `${yyyy}${mm}${dd}`;
+
+      const title = encodeURIComponent(`📚 Powtórka [${topic.subject}]: ${topic.title}`);
+      const details = encodeURIComponent(
+        `Dział: ${topic.category || "Ogólne"}\n` +
+        `Błędne odpowiedzi z ostatniej sesji: ${topic.wrongAnswers} / ${topic.totalQuestions}\n` +
+        `Notatki: ${topic.notes || "Brak"}`
+      );
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateRaw}/${nextDateRaw}&details=${details}`;
+    }
+
+    function computeMetrics(t) {
+      const total = Math.max(1, Number(t.totalQuestions) || 1);
+      const wrong = Math.min(total, Math.max(0, Number(t.wrongAnswers) || 0));
+      const errorRate = Math.round((wrong / total) * 100);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date((t.nextReviewDate || getRelDate(0)) + "T00:00:00");
+      const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
+
+      const overdueBonus = diffDays < 0 ? Math.abs(diffDays) * 6 : diffDays === 0 ? 4 : 0;
+      const urgencyScore = wrong * 3 + errorRate * 0.4 + overdueBonus;
+
+      let priority = {
+        level: "Niski",
+        rank: 2,
+        badge: "bg-sky-50 text-sky-800 border-sky-200",
+        bar: "bg-sky-500"
+      };
+
+      if (wrong === 0) {
+        priority = { level: "Opanowany", rank: 1, badge: "bg-emerald-50 text-emerald-800 border-emerald-200", bar: "bg-emerald-500" };
+      } else if (wrong >= 12 || errorRate >= 35) {
+        priority = { level: "Krytyczny", rank: 5, badge: "bg-rose-50 text-rose-700 border-rose-200", bar: "bg-rose-600" };
+      } else if (wrong >= 7 || errorRate >= 20) {
+        priority = { level: "Wysoki", rank: 4, badge: "bg-orange-50 text-orange-800 border-orange-200", bar: "bg-orange-500" };
+      } else if (wrong >= 3 || errorRate >= 10) {
+        priority = { level: "Średni", rank: 3, badge: "bg-amber-50 text-amber-800 border-amber-200", bar: "bg-amber-500" };
+      }
+
+      return { errorRate, diffDays, urgencyScore, priority };
+    }
+
+    function suggestIntervalDays(wrong, total, reps) {
+      const rate = (wrong / Math.max(1, total)) * 100;
+      if (wrong >= 12 || rate >= 35) return 1;
+      if (wrong >= 7 || rate >= 20) return 2;
+      if (wrong >= 3 || rate >= 10) return 4;
+      if (wrong >= 1) return Math.min(14, 6 + (reps || 1));
+      return Math.min(30, 10 + (reps || 1) * 3);
+    }
+
+    function renderAll() {
+      const enriched = topics.map(t => ({ ...t, metrics: computeMetrics(t) }));
+
+      // 1. Karty KPI (Material Design 3)
+      const dueCount = enriched.filter(t => t.metrics.diffDays <= 0).length;
+      const critCount = enriched.filter(t => t.metrics.priority.rank >= 4).length;
+      const totalQ = enriched.reduce((a, b) => a + (Number(b.totalQuestions) || 0), 0);
+      const totalW = enriched.reduce((a, b) => a + (Number(b.wrongAnswers) || 0), 0);
+      const acc = totalQ > 0 ? Math.round(((totalQ - totalW) / totalQ) * 100) : 100;
+
+      document.getElementById("kpiContainer").innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 md-elevation-1 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Na dziś i zaległe</p>
+            <p class="text-3xl font-bold text-slate-900 mt-1">${dueCount}</p>
+            <p class="text-xs text-slate-500 mt-1">Tematy wymagające powtórki</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60">
+            <span class="material-symbols-outlined text-[26px]">event_upcoming</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 md-elevation-1 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Priorytet Krytyczny/Wysoki</p>
+            <p class="text-3xl font-bold text-rose-600 mt-1">${critCount}</p>
+            <p class="text-xs text-slate-500 mt-1">Najwięcej błędnych pytań</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200/60">
+            <span class="material-symbols-outlined text-[26px]">local_fire_department</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 md-elevation-1 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Suma błędnych pytań</p>
+            <p class="text-3xl font-bold text-orange-600 mt-1">${totalW} <span class="text-sm font-medium text-slate-400">/ ${totalQ}</span></p>
+            <p class="text-xs text-slate-500 mt-1">Pytań do przepracowania</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-200/60">
+            <span class="material-symbols-outlined text-[26px]">error</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 md-elevation-1 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Skuteczność bazy</p>
+            <p class="text-3xl font-bold text-emerald-600 mt-1">${acc}%</p>
+            <p class="text-xs text-slate-500 mt-1">Poprawne odpowiedzi</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60">
+            <span class="material-symbols-outlined text-[26px]">verified</span>
+          </div>
+        </div>
+      `;
+
+      // 2. Filtry przedmiotów (Material Filter Chips)
+      const subjects = ["Wszystkie", ...new Set(topics.map(t => t.subject))];
+      document.getElementById("subjectFilters").innerHTML = subjects.map(s => `
+        <button onclick="setSubject('${s}')"
+          class="md-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border cursor-pointer ${
+            selectedSubject === s
+              ? 'bg-[#0b57d0] text-white border-[#0b57d0]'
+              : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+          }">${s}</button>
+      `).join("");
+
+      // 3. Filtrowanie i sortowanie
+      const filtered = enriched.filter(t => {
+        const matchSubj = selectedSubject === "Wszystkie" || t.subject === selectedSubject;
+        const q = searchQuery.toLowerCase();
+        const matchQ = !q ||
+          (t.title || "").toLowerCase().includes(q) ||
+          (t.category || "").toLowerCase().includes(q) ||
+          (t.notes || "").toLowerCase().includes(q);
+        return matchSubj && matchQ;
+      }).sort((a, b) => {
+        if (sortBy === "wrongDesc") return (b.wrongAnswers - a.wrongAnswers) || (b.metrics.errorRate - a.metrics.errorRate);
+        if (sortBy === "rateDesc") return (b.metrics.errorRate - a.metrics.errorRate) || (b.wrongAnswers - a.wrongAnswers);
+        if (sortBy === "dueAsc") return (a.metrics.diffDays - b.metrics.diffDays) || (b.wrongAnswers - a.wrongAnswers);
+        return b.metrics.urgencyScore - a.metrics.urgencyScore;
+      });
+
+      const container = document.getElementById("mainViewContainer");
+
+      // WIDOK LISTY
+      if (activeTab === "list") {
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-2 md-elevation-1">
+              <span class="material-symbols-outlined text-4xl text-slate-400">inbox</span>
+              <p class="text-sm font-semibold text-slate-700">Brak zagadnień spełniających wybrane kryteria</p>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = `<div class="space-y-3.5">` + filtered.map(t => {
+          const { errorRate, diffDays, priority } = t.metrics;
+          const dateBadge = diffDays < 0
+            ? `<span class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200"><span class="material-symbols-outlined text-[15px]">warning</span>Zaległe o ${Math.abs(diffDays)} dni (${t.nextReviewDate})</span>`
+            : diffDays === 0
+            ? `<span class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200"><span class="material-symbols-outlined text-[15px]">today</span>Dzisiaj (${t.nextReviewDate})</span>`
+            : `<span class="inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200"><span class="material-symbols-outlined text-[15px]">event</span>Za ${diffDays} dni (${t.nextReviewDate})</span>`;
+
+          const calUrl = getGoogleCalendarUrl(t);
+
+          return `
+            <div class="bg-white border border-slate-200/90 hover:border-slate-300 rounded-3xl p-5 transition-all md-elevation-1">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div class="space-y-2.5 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold px-3 py-1 rounded-full border ${priority.badge}">Priorytet: ${priority.level}</span>
+                    <span class="text-xs font-semibold px-3 py-1 rounded-full bg-[#e8f0fe] text-[#0b57d0]">${t.subject}</span>
+                    ${t.category ? `<span class="text-xs font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">${t.category}</span>` : ''}
+                    ${dateBadge}
+                  </div>
+
+                  <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">${t.title}</h3>
+
+                  ${t.notes ? `
+                    <div class="text-xs sm:text-sm text-slate-600 bg-[#f8fafd] border border-slate-200/80 rounded-2xl p-3 flex items-start gap-2">
+                      <span class="material-symbols-outlined text-slate-400 text-[18px] mt-0.5">sticky_note_2</span>
+                      <span>${t.notes}</span>
+                    </div>` : ''}
+                </div>
+
+                <!-- Prawa sekcja: Błędy + Akcje -->
+                <div class="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                  <div class="bg-[#f8fafd] border border-slate-200 rounded-2xl px-4 py-3 min-w-[205px]">
+                    <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+                      <span class="font-medium">Błędne odpowiedzi:</span>
+                      <span class="font-bold text-slate-700">${errorRate}%</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="text-xl font-bold text-rose-600">
+                        ${t.wrongAnswers} <span class="text-xs font-normal text-slate-500">/ ${t.totalQuestions} pytań</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <button onclick="quickAdjust('${t.id}', -1)"
+                          class="md-btn w-7 h-7 rounded-full bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 text-sm font-bold flex items-center justify-center cursor-pointer"
+                          title="Zmniejsz liczbę błędów">-</button>
+                        <button onclick="quickAdjust('${t.id}', 1)"
+                          class="md-btn w-7 h-7 rounded-full bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 text-sm font-bold flex items-center justify-center cursor-pointer"
+                          title="Zwiększ liczbę błędów">+</button>
+                      </div>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mt-2.5">
+                      <div class="h-full ${priority.bar}" style="width: ${Math.min(100, errorRate)}%"></div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button onclick="openReviewModal('${t.id}')"
+                      class="md-btn flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white md-elevation-1 cursor-pointer">
+                      <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                      <span>Wykonaj powtórkę</span>
+                    </button>
+
+                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer"
+                      class="md-btn p-2.5 rounded-full bg-slate-100 hover:bg-[#e8f0fe] text-slate-600 hover:text-[#0b57d0] border border-slate-200 cursor-pointer"
+                      title="Otwórz bezpośrednio w Kalendarzu Google">
+                      <span class="material-symbols-outlined text-[20px]">calendar_add_on</span>
+                    </a>
+
+                    <button onclick="deleteTopic('${t.id}')"
+                      class="md-btn p-2.5 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 cursor-pointer"
+                      title="Usuń zagadnienie">
+                      <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("") + `</div>`;
+      }
+
+      // WIDOK HARMONOGRAMU
+      if (activeTab === "schedule") {
+        const cols = [
+          { title: "Zaległe i na dzisiaj", sub: "Wymagają pilnej powtórki", badge: "bg-rose-100 text-rose-800", border: "border-rose-200", items: filtered.filter(t => t.metrics.diffDays <= 0) },
+          { title: "Najbliższe 3 dni", sub: "Zaplanowane wkrótce", badge: "bg-amber-100 text-amber-800", border: "border-amber-200", items: filtered.filter(t => t.metrics.diffDays >= 1 && t.metrics.diffDays <= 3) },
+          { title: "Dalsze terminy (> 3 dni)", sub: "Materiał utrwalony czasowo", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200", items: filtered.filter(t => t.metrics.diffDays > 3) }
+        ];
+
+        container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">` + cols.map(c => `
+          <div class="bg-white rounded-3xl border ${c.border} p-5 space-y-3.5 md-elevation-1">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">${c.title}</h3>
+                <p class="text-xs text-slate-500">${c.sub}</p>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full ${c.badge}">${c.items.length}</span>
+            </div>
+            <div class="space-y-2.5">
+              ${c.items.length === 0 ? `<p class="text-xs text-slate-400 py-6 text-center">Brak tematów w tym przedziale</p>` : c.items.map(item => `
+                <div class="bg-[#f8fafd] border border-slate-200/80 rounded-2xl p-3.5 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-[#0b57d0]">${item.subject}</span>
+                    <span class="text-[11px] font-bold text-rose-600">${item.wrongAnswers}/${item.totalQuestions} błędów</span>
+                  </div>
+                  <p class="text-xs font-bold text-slate-800">${item.title}</p>
+                  <div class="flex items-center justify-between pt-1">
+                    <span class="text-[11px] text-slate-500">Termin: ${item.nextReviewDate}</span>
+                    <button onclick="openReviewModal('${item.id}')" class="text-xs font-bold text-[#0b57d0] hover:underline cursor-pointer">Powtórz &rarr;</button>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        `).join("") + `</div>`;
+      }
+
+      // WIDOK STATYSTYK PRZEDMIOTÓW
+      if (activeTab === "stats") {
+        const realSubjects = subjects.filter(s => s !== "Wszystkie");
+        container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + realSubjects.map(subj => {
+          const list = enriched.filter(t => t.subject === subj);
+          const qSum = list.reduce((a, b) => a + b.totalQuestions, 0);
+          const wSum = list.reduce((a, b) => a + b.wrongAnswers, 0);
+          const rate = qSum > 0 ? Math.round((wSum / qSum) * 100) : 0;
+
+          return `
+            <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 md-elevation-1">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-slate-900">${subj}</h3>
+                  <p class="text-xs text-slate-500">Liczba działów/tematów: ${list.length}</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-lg font-bold text-rose-600">${wSum} błędów</span>
+                  <p class="text-xs text-slate-500">na ${qSum} pytań (${rate}%)</p>
+                </div>
+              </div>
+              <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full bg-[#0b57d0]" style="width: ${Math.min(100, rate)}%"></div>
+              </div>
+            </div>
+          `;
+        }).join("") + `</div>`;
+      }
+    }
+
+    function setTab(tab) {
+      activeTab = tab;
+      const icons = { list: "format_list_bulleted", schedule: "calendar_month", stats: "monitoring" };
+      const labels = { list: "Lista priorytetowa", schedule: "Harmonogram", stats: "Przedmioty" };
+      ["list", "schedule", "stats"].forEach(t => {
+        const el = document.getElementById("tab-" + t);
+        el.className = t === tab
+          ? "md-btn flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold cursor-pointer bg-[#d3e3fd] text-[#041e49]"
+          : "md-btn flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-medium cursor-pointer text-slate-600 hover:text-slate-900";
+        el.innerHTML = `<span class="material-symbols-outlined text-[18px]">${icons[t]}</span><span>${labels[t]}</span>`;
+      });
+      renderAll();
+    }
+
+    function setSubject(subj) {
+      selectedSubject = subj;
+      renderAll();
+    }
+
+    function handleSearch(val) {
+      searchQuery = val;
+      renderAll();
+    }
+
+    function handleSort(val) {
+      sortBy = val;
+      renderAll();
+    }
+
+    function quickAdjust(id, delta) {
+      topics = topics.map(t => {
+        if (t.id !== id) return t;
+        const nextWrong = Math.min(t.totalQuestions, Math.max(0, (Number(t.wrongAnswers) || 0) + delta));
+        return { ...t, wrongAnswers: nextWrong };
+      });
+      renderAll();
+      schedulePush(false, null);
+    }
+
+    function deleteTopic(id) {
+      topics = topics.filter(t => t.id !== id);
+      renderAll();
+      schedulePush(false, null);
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    function openAddModal() {
+      document.getElementById("addNextDate").value = getRelDate(1);
+      openModal("addModal");
+    }
+
+    function submitAddTopic(e) {
+      e.preventDefault();
+      const total = Math.max(1, Number(document.getElementById("addTotal").value) || 1);
+      const wrong = Math.min(total, Math.max(0, Number(document.getElementById("addWrong").value) || 0));
+      const syncCal = document.getElementById("addSyncCalendar").checked;
+
+      const newTopic = {
+        id: "topic-" + Date.now(),
+        subject: document.getElementById("addSubject").value.trim() || "Inny",
+        category: document.getElementById("addCategory").value.trim() || "Ogólne",
+        title: document.getElementById("addTitle").value.trim(),
+        totalQuestions: total,
+        wrongAnswers: wrong,
+        nextReviewDate: document.getElementById("addNextDate").value || getRelDate(1),
+        lastReviewDate: getRelDate(0),
+        repetitions: 1,
+        notes: document.getElementById("addNotes").value.trim(),
+        history: [{ date: getRelDate(0), wrong, total }]
+      };
+
+      topics.unshift(newTopic);
+      closeModal("addModal");
+      document.getElementById("addTitle").value = "";
+      document.getElementById("addNotes").value = "";
+      renderAll();
+      schedulePush(syncCal, syncCal ? newTopic : null);
+    }
+
+    function openReviewModal(id) {
+      const topic = topics.find(t => t.id === id);
+      if (!topic) return;
+      activeReviewTopicId = id;
+      document.getElementById("revTitle").textContent = topic.title;
+      document.getElementById("revWrong").value = topic.wrongAnswers;
+      document.getElementById("revTotal").value = topic.totalQuestions;
+      document.getElementById("revNotes").value = topic.notes || "";
+
+      const days = suggestIntervalDays(topic.wrongAnswers, topic.totalQuestions, topic.repetitions);
+      document.getElementById("revSuggestedLabel").textContent = `Sugerowany kolejny termin (za ${days} dni):`;
+      document.getElementById("revNextDate").value = getRelDate(days);
+
+      const hist = Array.isArray(topic.history) ? topic.history : [];
+      document.getElementById("revHistoryBox").innerHTML = hist.length > 0
+        ? `<div class="font-semibold text-slate-700 mb-1">Historia poprzednich sesji:</div>` + hist.map(h => `<span class="inline-block mr-2 mb-1 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700">${h.date}: <strong class="text-rose-600">${h.wrong}</strong>/${h.total}</span>`).join("")
+        : `Brak wcześniejszej historii sesji.`;
+
+      openModal("reviewModal");
+    }
+
+    function recalcSuggestedInterval() {
+      const topic = topics.find(t => t.id === activeReviewTopicId);
+      const wrong = Number(document.getElementById("revWrong").value) || 0;
+      const total = Math.max(1, Number(document.getElementById("revTotal").value) || 1);
+      const days = suggestIntervalDays(wrong, total, (topic?.repetitions || 1) + 1);
+      document.getElementById("revSuggestedLabel").textContent = `Sugerowany kolejny termin (za ${days} dni):`;
+      document.getElementById("revNextDate").value = getRelDate(days);
+    }
+
+    function setReviewDays(days) {
+      document.getElementById("revSuggestedLabel").textContent = `Wybrany kolejny termin (za ${days} dni):`;
+      document.getElementById("revNextDate").value = getRelDate(days);
+    }
+
+    function submitReview(e) {
+      e.preventDefault();
+      const total = Math.max(1, Number(document.getElementById("revTotal").value) || 1);
+      const wrong = Math.min(total, Math.max(0, Number(document.getElementById("revWrong").value) || 0));
+      const nextDate = document.getElementById("revNextDate").value || getRelDate(1);
+      const notes = document.getElementById("revNotes").value.trim();
+      const syncCal = document.getElementById("revSyncCalendar").checked;
+
+      let updatedObj = null;
+
+      topics = topics.map(t => {
+        if (t.id !== activeReviewTopicId) return t;
+        const nextHistory = [...(Array.isArray(t.history) ? t.history : []), { date: getRelDate(0), wrong, total }].slice(-10);
+        updatedObj = {
+          ...t,
+          totalQuestions: total,
+          wrongAnswers: wrong,
+          lastReviewDate: getRelDate(0),
+          nextReviewDate: nextDate,
+          repetitions: (Number(t.repetitions) || 1) + 1,
+          notes: notes,
+          history: nextHistory
+        };
+        return updatedObj;
+      });
+
+      closeModal("reviewModal");
+      renderAll();
+      schedulePush(syncCal, syncCal ? updatedObj : null);
+    }
+
+    init();
+  </script>
+</body>
+</html>
