@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Repetytorium Pro – System Powtórek</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Czcionki Google (Roboto + Google Sans style) oraz ikony Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -30,28 +29,91 @@
       font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
       vertical-align: middle;
     }
-    /* Material Design 3 Elevation */
     .md-elevation-1 {
       box-shadow: 0 1px 2px 0 rgba(60,64,67,0.12), 0 1px 3px 1px rgba(60,64,67,0.08);
-    }
-    .md-elevation-2 {
-      box-shadow: 0 1px 3px 0 rgba(60,64,67,0.16), 0 4px 8px 3px rgba(60,64,67,0.10);
     }
     .md-elevation-3 {
       box-shadow: 0 4px 8px 3px rgba(60,64,67,0.15), 0 1px 3px 0 rgba(60,64,67,0.25);
     }
-    /* Material Ripple / Transition */
     .md-btn {
       transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
     }
     .md-btn:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-anim {
+      animation: shake 0.35s ease-in-out;
     }
   </style>
 </head>
 <body class="min-h-screen pb-16">
 
-  <!-- TOP APP BAR (Material Design 3) -->
+  <!-- ====================================================================== -->
+  <!-- EKRAN BLOKADY PIN (MATERIAL DESIGN 3 LOCK SCREEN)                      -->
+  <!-- ====================================================================== -->
+  <div id="pinLockOverlay" class="fixed inset-0 z-50 bg-[#f0f4f9] flex items-center justify-center p-4">
+    <div id="pinCard" class="bg-white rounded-[32px] max-w-sm w-full p-7 sm:p-8 md-elevation-3 border border-slate-200/80 text-center space-y-5">
+      <div class="w-16 h-16 rounded-3xl bg-[#d3e3fd] text-[#0b57d0] flex items-center justify-center mx-auto shadow-xs">
+        <span class="material-symbols-outlined text-[32px]">lock</span>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="text-xl font-bold text-slate-900">Autoryzacja PIN</h2>
+        <p class="text-xs text-slate-500">
+          Wprowadź kod PIN zapisany w Arkuszu Google, aby odblokować bazę powtórek.
+        </p>
+      </div>
+
+      <form onsubmit="handlePinSubmit(event)" class="space-y-4">
+        <div>
+          <input id="pinInput" type="password" inputmode="numeric" required autofocus
+            placeholder="••••"
+            class="w-full text-center tracking-[0.5em] text-2xl font-bold bg-[#f8fafd] border-2 border-slate-300 focus:border-[#0b57d0] rounded-2xl py-3 px-4 text-slate-900 focus:outline-none transition-all" />
+          <p id="pinErrorMsg" class="hidden text-xs font-semibold text-rose-600 mt-2">
+            Nieprawidłowy kod PIN. Spróbuj ponownie.
+          </p>
+        </div>
+
+        <!-- Klawiatura numeryczna Material 3 -->
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <button type="button" onclick="appendPinDigit('1')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">1</button>
+          <button type="button" onclick="appendPinDigit('2')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">2</button>
+          <button type="button" onclick="appendPinDigit('3')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">3</button>
+          <button type="button" onclick="appendPinDigit('4')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">4</button>
+          <button type="button" onclick="appendPinDigit('5')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">5</button>
+          <button type="button" onclick="appendPinDigit('6')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">6</button>
+          <button type="button" onclick="appendPinDigit('7')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">7</button>
+          <button type="button" onclick="appendPinDigit('8')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">8</button>
+          <button type="button" onclick="appendPinDigit('9')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">9</button>
+          <button type="button" onclick="clearPinDigits()" class="md-btn py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs border border-rose-200/60 cursor-pointer">Wyczyść</button>
+          <button type="button" onclick="appendPinDigit('0')" class="md-btn py-3 rounded-2xl bg-[#f8fafd] hover:bg-[#e8f0fe] text-slate-800 font-bold text-base border border-slate-200/80 cursor-pointer">0</button>
+          <button type="button" onclick="backspacePinDigit()" class="md-btn py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200/80 cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">backspace</span>
+          </button>
+        </div>
+
+        <label class="flex items-center justify-center gap-2 text-xs text-slate-600 cursor-pointer pt-1">
+          <input id="rememberPinCheckbox" type="checkbox" checked class="w-4 h-4 accent-[#0b57d0] rounded" />
+          <span>Zapamiętaj PIN na tym urządzeniu</span>
+        </label>
+
+        <button id="pinSubmitBtn" type="submit"
+          class="md-btn w-full py-3 rounded-full text-sm font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white md-elevation-1 cursor-pointer flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">lock_open</span>
+          <span id="pinSubmitText">Odblokuj panel</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- GÓRNY PASEK APLIKACJI (TOP APP BAR MATERIAL DESIGN 3)                  -->
+  <!-- ====================================================================== -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -61,27 +123,33 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">Repetytorium Pro</h1>
-            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#e8f0fe] text-[#0b57d0]">
-              Material 3 • Cloud Sync
+            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#e8f0fe] text-[#0b57d0] flex items-center gap-1">
+              <span class="material-symbols-outlined text-[13px]">verified_user</span>
+              Chronione PIN-em
             </span>
           </div>
           <p class="text-xs text-slate-500">System powtórek priorytetyzowany liczbą błędnych pytań i Kalendarzem Google</p>
         </div>
       </div>
 
-      <!-- Status synchronizacji + Główne akcje -->
-      <div class="flex items-center gap-2.5 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
         <button onclick="openModal('cloudModal')"
           class="md-btn flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 cursor-pointer"
-          title="Kliknij, aby sprawdzić status Arkusza Google i Kalendarza">
+          title="Ustawienia chmury i zmiana kodu PIN">
           <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span id="syncStatusText">Łączenie z Arkuszem...</span>
+          <span id="syncStatusText">Połączono</span>
         </button>
 
         <button onclick="pullFromGoogleSheets()"
           class="md-btn p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 cursor-pointer"
-          title="Odśwież dane z Arkusza Google">
+          title="Odśwież bazę z Arkusza Google">
           <span class="material-symbols-outlined text-[20px]">sync</span>
+        </button>
+
+        <button onclick="lockApp()"
+          class="md-btn p-2 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 cursor-pointer"
+          title="Zablokuj aplikację (wyloguj PIN)">
+          <span class="material-symbols-outlined text-[20px]">lock</span>
         </button>
 
         <button onclick="openAddModal()"
@@ -94,13 +162,12 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-    <!-- KARTY KPI (Material Surface Cards) -->
+    <!-- KARTY KPI -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpiContainer"></section>
 
-    <!-- PASEK NAWIGACJI I FILTRÓW (Material Segmented / Chips) -->
+    <!-- PASEK NAWIGACJI I FILTRÓW -->
     <section class="bg-white rounded-3xl border border-slate-200/90 md-elevation-1 p-4 sm:p-5 space-y-4">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <!-- Zakładki widoku -->
         <div class="inline-flex p-1 rounded-full bg-slate-100 border border-slate-200/80">
           <button onclick="setTab('list')" id="tab-list"
             class="md-btn flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold cursor-pointer bg-[#d3e3fd] text-[#041e49]">
@@ -119,11 +186,9 @@
           </button>
         </div>
 
-        <!-- Chip filtry przedmiotów -->
         <div id="subjectFilters" class="flex items-center gap-1.5 flex-wrap"></div>
       </div>
 
-      <!-- Wyszukiwarka i Sortowanie -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div class="relative flex-1">
           <span class="material-symbols-outlined text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 text-[20px]">search</span>
@@ -151,9 +216,9 @@
   </main>
 
   <!-- ====================================================================== -->
-  <!-- MODAL 1: DODAJ ZAGADNIENIE (Material Dialog)                           -->
+  <!-- MODAL 1: DODAJ ZAGADNIENIE                                             -->
   <!-- ====================================================================== -->
-  <div id="addModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+  <div id="addModal" class="hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-[28px] max-w-lg w-full p-6 sm:p-7 space-y-5 md-elevation-3 border border-slate-100">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
@@ -211,12 +276,11 @@
             class="w-full bg-slate-50 border border-slate-300 focus:border-[#0b57d0] rounded-xl p-3 text-xs sm:text-sm text-slate-900 focus:outline-none"></textarea>
         </div>
 
-        <!-- Opcja synchronizacji z Kalendarzem Google -->
         <label class="flex items-center gap-2.5 p-3 rounded-2xl bg-[#f0f4f9] border border-slate-200/80 cursor-pointer">
           <input id="addSyncCalendar" type="checkbox" checked class="w-4 h-4 accent-[#0b57d0] rounded" />
           <div class="text-xs">
             <span class="font-semibold text-slate-800">Dodaj przypomnienie w Kalendarzu Google</span>
-            <p class="text-slate-500 text-[11px]">Tworzy wydarzenie całodniowe w dniu wyznaczonej powtórki</p>
+            <p class="text-slate-500 text-[11px]">Tworzy wydarzenie całodniowe z powiadomieniem w dniu powtórki</p>
           </div>
         </label>
 
@@ -235,9 +299,9 @@
   </div>
 
   <!-- ====================================================================== -->
-  <!-- MODAL 2: WYKONAJ POWTÓRKĘ (Spaced Repetition + Kalendarz)              -->
+  <!-- MODAL 2: WYKONAJ POWTÓRKĘ                                              -->
   <!-- ====================================================================== -->
-  <div id="reviewModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+  <div id="reviewModal" class="hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-[28px] max-w-lg w-full p-6 sm:p-7 space-y-4 md-elevation-3 border border-slate-100">
       <div class="flex items-start justify-between gap-2">
         <div>
@@ -311,47 +375,64 @@
   </div>
 
   <!-- ====================================================================== -->
-  <!-- MODAL 3: STATUS POŁĄCZENIA Z ARKUSZEM I KALENDARZEM                    -->
+  <!-- MODAL 3: USTAWIENIA CHMURY I ZMIANA KODU PIN W BAZIE                   -->
   <!-- ====================================================================== -->
-  <div id="cloudModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-[28px] max-w-xl w-full p-6 sm:p-7 space-y-4 md-elevation-3 border border-slate-100">
+  <div id="cloudModal" class="hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-[28px] max-w-xl w-full p-6 sm:p-7 space-y-5 md-elevation-3 border border-slate-100 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-full bg-[#d3e3fd] text-[#0b57d0] flex items-center justify-center">
-            <span class="material-symbols-outlined text-[20px]">cloud_done</span>
+            <span class="material-symbols-outlined text-[20px]">security</span>
           </div>
-          <h2 class="text-lg font-bold text-slate-900">Synchronizacja Google Sheets & Kalendarz</h2>
+          <h2 class="text-lg font-bold text-slate-900">Bezpieczeństwo PIN & Baza Google Sheets</h2>
         </div>
         <button onclick="closeModal('cloudModal')" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500 flex items-center justify-center cursor-pointer">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
 
-      <p class="text-xs text-slate-600 leading-relaxed">
-        Adres Twojego skryptu Google Apps Script jest wbudowany na stałe. Wszystkie zmiany automatycznie zapisują się w Arkuszu Google oraz (jeśli zaznaczono) w Kalendarzu Google.
-      </p>
+      <!-- Zmiana PIN-u bezpośrednio w Arkuszu Google -->
+      <div class="bg-[#f8fafd] border border-slate-200 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0b57d0] text-[20px]">pin</span>
+          <h3 class="text-sm font-bold text-slate-900">Zmień kod PIN w bazie danych (Arkusz „Konfiguracja”)</h3>
+        </div>
+        <p class="text-xs text-slate-600">
+          Nowy PIN zostanie zapisany w komórce <code>Konfiguracja!B2</code> w Twoim Arkuszu Google i będzie wymagany na każdym urządzeniu.
+        </p>
+        <div class="flex gap-2">
+          <input id="newPinInput" type="password" inputmode="numeric" placeholder="Nowy PIN (min. 4 znaki)..."
+            class="flex-1 bg-white border border-slate-300 focus:border-[#0b57d0] rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:outline-none" />
+          <button type="button" onclick="changePinInDatabase()"
+            class="md-btn px-4 py-2 rounded-full text-xs font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white cursor-pointer">
+            Zmień PIN w bazie
+          </button>
+        </div>
+        <p id="changePinStatus" class="text-xs font-medium text-slate-500 hidden"></p>
+      </div>
 
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1">Aktywny adres Web App (/exec):</label>
+      <!-- Adres skryptu -->
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-700">Aktywny adres Web App (/exec):</label>
         <input id="scriptUrlInput" type="url"
           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 font-mono" />
       </div>
 
-      <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
         <div class="flex items-center gap-2">
           <button type="button" onclick="pullFromGoogleSheets()"
             class="md-btn px-4 py-2 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
             Pobierz z Arkusza
           </button>
-          <button type="button" onclick="pushToGoogleSheets(true)"
+          <button type="button" onclick="pushToGoogleSheets(true, null, null)"
             class="md-btn px-4 py-2 rounded-full text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-pointer">
             Wymuś zapis + Kalendarz
           </button>
         </div>
 
         <button type="button" onclick="saveScriptUrl()"
-          class="md-btn px-5 py-2 rounded-full text-xs font-semibold bg-[#0b57d0] hover:bg-[#0842a0] text-white cursor-pointer">
-          Zapisz ustawienia
+          class="md-btn px-5 py-2 rounded-full text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white cursor-pointer">
+          Zapisz URL
         </button>
       </div>
     </div>
@@ -359,12 +440,13 @@
 
   <script>
     // ========================================================================
-    // WBUDOWANY NA SZTYWNO ADRES SKRYPTU GOOGLE APPS SCRIPT UŻYTKOWNIKA
+    // WBUDOWANY NA SZTYWNO ADRES SKRYPTU GOOGLE APPS SCRIPT
     // ========================================================================
     const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1EsjM8flWWag88ydGBuLug699a8vvXPaZ69HEsBdCNXK__7kH5qnlw5uArOasLW5zNw/exec";
 
-    const STORAGE_TOPICS_KEY = "repetytorium_m3_topics_v2";
-    const STORAGE_URL_KEY = "repetytorium_m3_script_url_v2";
+    const STORAGE_TOPICS_KEY = "repetytorium_m3_topics_v4";
+    const STORAGE_URL_KEY = "repetytorium_m3_script_url_v4";
+    const STORAGE_PIN_KEY = "repetytorium_m3_auth_pin_v4";
 
     const getRelDate = (offsetDays) => {
       const d = new Date();
@@ -376,93 +458,13 @@
       return `${yyyy}-${mm}-${dd}`;
     };
 
-    const SEED_TOPICS = [
-      {
-        id: "topic-1",
-        subject: "Chemia",
-        category: "Chemia organiczna",
-        title: "Reakcje estryfikacji, hydrolizy estrów oraz próba Tollensa i Trommera",
-        totalQuestions: 45,
-        wrongAnswers: 16,
-        nextReviewDate: getRelDate(0),
-        lastReviewDate: getRelDate(-2),
-        repetitions: 3,
-        notes: "Zwrócić uwagę na warunki reakcji, katalizator H2SO4 oraz stechiometrię utleniania aldehydów do kwasów karboksylowych.",
-        history: [{ date: getRelDate(-7), wrong: 24, total: 45 }, { date: getRelDate(-2), wrong: 16, total: 45 }]
-      },
-      {
-        id: "topic-2",
-        subject: "Biologia",
-        category: "Metabolizm",
-        title: "Oddychanie komórkowe: glikoliza, reakcja pomostowa i cykl Krebsa",
-        totalQuestions: 40,
-        wrongAnswers: 13,
-        nextReviewDate: getRelDate(-1),
-        lastReviewDate: getRelDate(-4),
-        repetitions: 2,
-        notes: "Powtórzyć bilans ATP, fosforylację substratową vs oksydacyjną oraz lokalizację poszczególnych etapów.",
-        history: [{ date: getRelDate(-8), wrong: 19, total: 40 }, { date: getRelDate(-4), wrong: 13, total: 40 }]
-      },
-      {
-        id: "topic-3",
-        subject: "Chemia",
-        category: "Chemia nieorganiczna",
-        title: "Reakcje redoks: MnO4- oraz Cr2O7(2-) w środowisku kwaśnym, obojętnym i zasadowym",
-        totalQuestions: 35,
-        wrongAnswers: 11,
-        nextReviewDate: getRelDate(0),
-        lastReviewDate: getRelDate(-3),
-        repetitions: 3,
-        notes: "Bilans elektronowo-jonowy, zmiana barw roztworów (fiolet -> bezbarwny / zielony / brunatny osad MnO2).",
-        history: [{ date: getRelDate(-6), wrong: 15, total: 35 }, { date: getRelDate(-3), wrong: 11, total: 35 }]
-      },
-      {
-        id: "topic-4",
-        subject: "Chemia",
-        category: "Chemia fizyczna",
-        title: "Równowaga chemiczna, reguła przekory i pH roztworów buforowych",
-        totalQuestions: 35,
-        wrongAnswers: 7,
-        nextReviewDate: getRelDate(1),
-        lastReviewDate: getRelDate(-3),
-        repetitions: 4,
-        notes: "Wpływ ciśnienia i temperatury na stałą równowagi Kc oraz obliczenia ze stałej dysocjacji Ka/Kb.",
-        history: [{ date: getRelDate(-6), wrong: 12, total: 35 }, { date: getRelDate(-3), wrong: 7, total: 35 }]
-      },
-      {
-        id: "topic-5",
-        subject: "Biologia",
-        category: "Genetyka",
-        title: "Ekspresja informacji genetycznej, operony i mutacje punktowe",
-        totalQuestions: 50,
-        wrongAnswers: 4,
-        nextReviewDate: getRelDate(3),
-        lastReviewDate: getRelDate(-3),
-        repetitions: 5,
-        notes: "Operon laktozowy i tryptofanowy - różnica między indukcją a represją procesów transkrypcji.",
-        history: [{ date: getRelDate(-10), wrong: 11, total: 50 }, { date: getRelDate(-3), wrong: 4, total: 50 }]
-      },
-      {
-        id: "topic-6",
-        subject: "Chemia",
-        category: "Węglowodory",
-        title: "Reakcje substytucji rodnikowej, elektrofilowej oraz addycji do alkenów i alkinów",
-        totalQuestions: 40,
-        wrongAnswers: 9,
-        nextReviewDate: getRelDate(1),
-        lastReviewDate: getRelDate(-2),
-        repetitions: 2,
-        notes: "Reakcja Kuczerowa, bromowanie benzenu wobec FeBr3 vs na świetle (toluen), reguła Markownikowa.",
-        history: [{ date: getRelDate(-2), wrong: 9, total: 40 }]
-      }
-    ];
-
     let topics = [];
     let scriptUrl = localStorage.getItem(STORAGE_URL_KEY) || DEFAULT_SCRIPT_URL;
     if (!scriptUrl || !scriptUrl.includes("/exec")) {
       scriptUrl = DEFAULT_SCRIPT_URL;
     }
 
+    let currentPin = localStorage.getItem(STORAGE_PIN_KEY) || "";
     let activeTab = "list";
     let selectedSubject = "Wszystkie";
     let searchQuery = "";
@@ -471,16 +473,149 @@
     let syncTimeout = null;
 
     function init() {
+      document.getElementById("scriptUrlInput").value = scriptUrl;
+
+      if (currentPin) {
+        document.getElementById("pinInput").value = currentPin;
+        verifyPinAndLoad(currentPin, true);
+      } else {
+        showPinLockScreen();
+      }
+    }
+
+    // Obsługa klawiatury numerycznej ekranu PIN
+    function appendPinDigit(digit) {
+      const input = document.getElementById("pinInput");
+      if (input.value.length < 12) {
+        input.value += digit;
+      }
+      document.getElementById("pinErrorMsg").classList.add("hidden");
+    }
+
+    function backspacePinDigit() {
+      const input = document.getElementById("pinInput");
+      input.value = input.value.slice(0, -1);
+    }
+
+    function clearPinDigits() {
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinErrorMsg").classList.add("hidden");
+    }
+
+    function showPinLockScreen() {
+      document.getElementById("pinLockOverlay").classList.remove("hidden");
+      setTimeout(() => document.getElementById("pinInput").focus(), 100);
+    }
+
+    function lockApp() {
+      currentPin = "";
+      localStorage.removeItem(STORAGE_PIN_KEY);
+      document.getElementById("pinInput").value = "";
+      showPinLockScreen();
+    }
+
+    async function handlePinSubmit(e) {
+      e.preventDefault();
+      const enteredPin = document.getElementById("pinInput").value.trim();
+      if (!enteredPin) return;
+      const remember = document.getElementById("rememberPinCheckbox").checked;
+      await verifyPinAndLoad(enteredPin, remember);
+    }
+
+    // Weryfikacja PIN-u po stronie Google Sheets (Apps Script)
+    async function verifyPinAndLoad(candidatePin, remember) {
+      const btnText = document.getElementById("pinSubmitText");
+      const errMsg = document.getElementById("pinErrorMsg");
+      const card = document.getElementById("pinCard");
+
+      btnText.textContent = "Weryfikacja w bazie...";
+      errMsg.classList.add("hidden");
+
       try {
-        const saved = localStorage.getItem(STORAGE_TOPICS_KEY);
-        topics = saved ? JSON.parse(saved) : SEED_TOPICS;
-      } catch (e) {
-        topics = SEED_TOPICS;
+        const urlWithPin = `${scriptUrl}?pin=${encodeURIComponent(candidatePin)}`;
+        const res = await fetch(urlWithPin, { method: "GET", redirect: "follow" });
+        const data = await res.json();
+
+        if (data.status === "unauthorized") {
+          btnText.textContent = "Odblokuj panel";
+          errMsg.textContent = "Nieprawidłowy kod PIN (sprawdź arkusz Konfiguracja!B2).";
+          errMsg.classList.remove("hidden");
+          card.classList.remove("shake-anim");
+          void card.offsetWidth;
+          card.classList.add("shake-anim");
+          localStorage.removeItem(STORAGE_PIN_KEY);
+          return;
+        }
+
+        if (data.status === "ok" && Array.isArray(data.topics)) {
+          currentPin = candidatePin;
+          if (remember) {
+            localStorage.setItem(STORAGE_PIN_KEY, currentPin);
+          } else {
+            localStorage.removeItem(STORAGE_PIN_KEY);
+          }
+
+          topics = data.topics;
+          saveLocal();
+          renderAll();
+          document.getElementById("pinLockOverlay").classList.add("hidden");
+          btnText.textContent = "Odblokuj panel";
+          updateSyncBadge("ok", "Połączono z Google Sheets");
+        } else {
+          throw new Error(data.message || "Błąd odpowiedzi serwera");
+        }
+      } catch (err) {
+        console.error(err);
+        btnText.textContent = "Odblokuj panel";
+        errMsg.textContent = "Błąd połączenia z Arkuszem Google. Sprawdź wdrożenie Apps Script.";
+        errMsg.classList.remove("hidden");
+      }
+    }
+
+    // Zmiana kodu PIN w Arkuszu Google
+    async function changePinInDatabase() {
+      const newPin = document.getElementById("newPinInput").value.trim();
+      const statusEl = document.getElementById("changePinStatus");
+      statusEl.classList.remove("hidden");
+
+      if (newPin.length < 4) {
+        statusEl.textContent = "PIN musi składać się z co najmniej 4 znaków.";
+        statusEl.className = "text-xs font-semibold text-rose-600";
+        return;
       }
 
-      document.getElementById("scriptUrlInput").value = scriptUrl;
-      renderAll();
-      pullFromGoogleSheets();
+      statusEl.textContent = "Zapisywanie nowego PIN-u w Arkuszu Google...";
+      statusEl.className = "text-xs font-semibold text-amber-600";
+
+      try {
+        const res = await fetch(scriptUrl, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "changePin",
+            pin: currentPin,
+            newPin: newPin
+          })
+        });
+        const data = await res.json();
+
+        if (data.status === "ok") {
+          currentPin = newPin;
+          if (localStorage.getItem(STORAGE_PIN_KEY)) {
+            localStorage.setItem(STORAGE_PIN_KEY, newPin);
+          }
+          document.getElementById("newPinInput").value = "";
+          statusEl.textContent = "✓ Nowy PIN został zapisany w Arkuszu Google!";
+          statusEl.className = "text-xs font-semibold text-emerald-600";
+        } else {
+          statusEl.textContent = data.message || "Błąd zmiany PIN-u.";
+          statusEl.className = "text-xs font-semibold text-rose-600";
+        }
+      } catch (err) {
+        statusEl.textContent = "Błąd połączenia podczas zmiany PIN-u.";
+        statusEl.className = "text-xs font-semibold text-rose-600";
+      }
     }
 
     function saveLocal() {
@@ -501,39 +636,44 @@
     }
 
     async function pullFromGoogleSheets() {
-      if (!scriptUrl) return;
+      if (!scriptUrl || !currentPin) return;
       updateSyncBadge("syncing", "Synchronizacja z Arkuszem...");
       try {
-        const res = await fetch(scriptUrl, { method: "GET", redirect: "follow" });
+        const urlWithPin = `${scriptUrl}?pin=${encodeURIComponent(currentPin)}`;
+        const res = await fetch(urlWithPin, { method: "GET", redirect: "follow" });
         const data = await res.json();
+
+        if (data.status === "unauthorized") {
+          lockApp();
+          return;
+        }
+
         if (data.status === "ok" && Array.isArray(data.topics)) {
-          if (data.topics.length > 0) {
-            topics = data.topics;
-            saveLocal();
-            renderAll();
-          } else {
-            await pushToGoogleSheets(false);
-          }
+          topics = data.topics;
+          saveLocal();
+          renderAll();
           updateSyncBadge("ok", "Połączono z Google Sheets");
         } else {
           updateSyncBadge("error", "Błąd odpowiedzi skryptu");
         }
       } catch (err) {
         console.error(err);
-        updateSyncBadge("error", "Tryb lokalny (błąd sieci)");
+        updateSyncBadge("error", "Błąd sieci");
       }
     }
 
-    async function pushToGoogleSheets(syncCalendarFlag = false, calendarTopic = null) {
+    async function pushToGoogleSheets(syncCalendarFlag = false, calendarTopic = null, deletedTopicId = null) {
       saveLocal();
-      if (!scriptUrl) return;
+      if (!scriptUrl || !currentPin) return;
       updateSyncBadge("syncing", "Zapisywanie zmian...");
       try {
         const payload = {
           action: "syncAll",
+          pin: currentPin,
           topics: topics,
           syncCalendar: Boolean(syncCalendarFlag),
-          calendarTopic: calendarTopic
+          calendarTopic: calendarTopic,
+          deletedTopicId: deletedTopicId
         };
         const res = await fetch(scriptUrl, {
           method: "POST",
@@ -542,9 +682,21 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
+
+        if (data.status === "unauthorized") {
+          lockApp();
+          return;
+        }
+
         if (data.status === "ok") {
           const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          updateSyncBadge("ok", calendarTopic ? `Zapisano + Kalendarz (${timeStr})` : `Zapisano w chmurze (${timeStr})`);
+          if (deletedTopicId) {
+            updateSyncBadge("ok", `Usunięto z bazy i Kalendarza (${timeStr})`);
+          } else if (calendarTopic) {
+            updateSyncBadge("ok", `Zapisano + Kalendarz (${timeStr})`);
+          } else {
+            updateSyncBadge("ok", `Zapisano w chmurze (${timeStr})`);
+          }
         } else {
           updateSyncBadge("error", "Błąd zapisu w Arkuszu");
         }
@@ -554,13 +706,13 @@
       }
     }
 
-    function schedulePush(syncCalendarFlag = false, calendarTopic = null) {
+    function schedulePush(syncCalendarFlag = false, calendarTopic = null, deletedTopicId = null) {
       saveLocal();
-      if (!scriptUrl) return;
+      if (!scriptUrl || !currentPin) return;
       clearTimeout(syncTimeout);
       updateSyncBadge("syncing", "Zapisywanie...");
       syncTimeout = setTimeout(() => {
-        pushToGoogleSheets(syncCalendarFlag, calendarTopic);
+        pushToGoogleSheets(syncCalendarFlag, calendarTopic, deletedTopicId);
       }, 450);
     }
 
@@ -571,7 +723,6 @@
       pullFromGoogleSheets();
     }
 
-    // Szybki link do Kalendarza Google (otwierany w nowej karcie na życzenie)
     function getGoogleCalendarUrl(topic) {
       const dateRaw = (topic.nextReviewDate || getRelDate(0)).replace(/-/g, "");
       const nextDayObj = new Date((topic.nextReviewDate || getRelDate(0)) + "T00:00:00");
@@ -635,7 +786,6 @@
     function renderAll() {
       const enriched = topics.map(t => ({ ...t, metrics: computeMetrics(t) }));
 
-      // 1. Karty KPI (Material Design 3)
       const dueCount = enriched.filter(t => t.metrics.diffDays <= 0).length;
       const critCount = enriched.filter(t => t.metrics.priority.rank >= 4).length;
       const totalQ = enriched.reduce((a, b) => a + (Number(b.totalQuestions) || 0), 0);
@@ -688,7 +838,6 @@
         </div>
       `;
 
-      // 2. Filtry przedmiotów (Material Filter Chips)
       const subjects = ["Wszystkie", ...new Set(topics.map(t => t.subject))];
       document.getElementById("subjectFilters").innerHTML = subjects.map(s => `
         <button onclick="setSubject('${s}')"
@@ -699,7 +848,6 @@
           }">${s}</button>
       `).join("");
 
-      // 3. Filtrowanie i sortowanie
       const filtered = enriched.filter(t => {
         const matchSubj = selectedSubject === "Wszystkie" || t.subject === selectedSubject;
         const q = searchQuery.toLowerCase();
@@ -717,7 +865,6 @@
 
       const container = document.getElementById("mainViewContainer");
 
-      // WIDOK LISTY
       if (activeTab === "list") {
         if (filtered.length === 0) {
           container.innerHTML = `
@@ -758,7 +905,6 @@
                     </div>` : ''}
                 </div>
 
-                <!-- Prawa sekcja: Błędy + Akcje -->
                 <div class="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                   <div class="bg-[#f8fafd] border border-slate-200 rounded-2xl px-4 py-3 min-w-[205px]">
                     <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
@@ -792,13 +938,13 @@
 
                     <a href="${calUrl}" target="_blank" rel="noopener noreferrer"
                       class="md-btn p-2.5 rounded-full bg-slate-100 hover:bg-[#e8f0fe] text-slate-600 hover:text-[#0b57d0] border border-slate-200 cursor-pointer"
-                      title="Otwórz bezpośrednio w Kalendarzu Google">
+                      title="Otwórz w Kalendarzu Google">
                       <span class="material-symbols-outlined text-[20px]">calendar_add_on</span>
                     </a>
 
                     <button onclick="deleteTopic('${t.id}')"
                       class="md-btn p-2.5 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 cursor-pointer"
-                      title="Usuń zagadnienie">
+                      title="Usuń zagadnienie z bazy i Kalendarza Google">
                       <span class="material-symbols-outlined text-[20px]">delete</span>
                     </button>
                   </div>
@@ -809,7 +955,6 @@
         }).join("") + `</div>`;
       }
 
-      // WIDOK HARMONOGRAMU
       if (activeTab === "schedule") {
         const cols = [
           { title: "Zaległe i na dzisiaj", sub: "Wymagają pilnej powtórki", badge: "bg-rose-100 text-rose-800", border: "border-rose-200", items: filtered.filter(t => t.metrics.diffDays <= 0) },
@@ -845,7 +990,6 @@
         `).join("") + `</div>`;
       }
 
-      // WIDOK STATYSTYK PRZEDMIOTÓW
       if (activeTab === "stats") {
         const realSubjects = subjects.filter(s => s !== "Wszystkie");
         container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + realSubjects.map(subj => {
@@ -911,13 +1055,14 @@
         return { ...t, wrongAnswers: nextWrong };
       });
       renderAll();
-      schedulePush(false, null);
+      schedulePush(false, null, null);
     }
 
+    // Usuwa zagadnienie z aplikacji, z Arkusza Google oraz z Kalendarza Google
     function deleteTopic(id) {
       topics = topics.filter(t => t.id !== id);
       renderAll();
-      schedulePush(false, null);
+      schedulePush(false, null, id);
     }
 
     function openModal(id) {
@@ -958,7 +1103,7 @@
       document.getElementById("addTitle").value = "";
       document.getElementById("addNotes").value = "";
       renderAll();
-      schedulePush(syncCal, syncCal ? newTopic : null);
+      schedulePush(syncCal, syncCal ? newTopic : null, null);
     }
 
     function openReviewModal(id) {
@@ -1024,7 +1169,7 @@
 
       closeModal("reviewModal");
       renderAll();
-      schedulePush(syncCal, syncCal ? updatedObj : null);
+      schedulePush(syncCal, syncCal ? updatedObj : null, null);
     }
 
     init();
